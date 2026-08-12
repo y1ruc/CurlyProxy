@@ -15,16 +15,10 @@ Open `http://localhost:3000`.
 
 ## Deploy
 
-Point `proxy.curly.center` at a VPS, put Cloudflare in front (orange cloud + Full SSL), run:
+**SITE COMING SOON**
 
 ```bash
 npm start
-```
-
-Or keep it on a laptop with Cloudflare Tunnel:
-
-```bash
-cloudflared tunnel run --url http://localhost:3000 curlyproxy
 ```
 
 ## Features
