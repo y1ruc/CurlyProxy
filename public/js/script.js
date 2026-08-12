@@ -73,8 +73,6 @@ function renderMaskSelector(){
     })(MASKS[i])}
 }
 
-/* ── Webhook ── */
-function ping(p,b){fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})}).catch(function(){})}
 
 /* ── URL ── */
 function fix(u){u=(u||'').trim();if(!u)return'';if(/^https?:\/\//i.test(u))return u;if(u.includes('.')&&!u.includes(' '))return'https://'+u;return'https://www.google.com/search?q='+encodeURIComponent(u)}
@@ -130,7 +128,7 @@ function go(raw){
     activeTabId=t.id;urlInput.value=u;
     proxyFrame.src='/proxy?url='+encodeURIComponent(u);
     welcome.style.display='none';proxyFrame.style.display='block';
-    drawTabs();ping('/api/log-proxy',{url:u,title:t.title});
+    drawTabs();
 }
 
 /* ── Games ── */
@@ -177,7 +175,6 @@ $('#cloak-btn').addEventListener('click',function(){maskOverlay.classList.remove
 /* ── Boot ── */
 renderMaskSelector();
 renderGames();
-ping('/api/connect');
 
 var saved=loadCloak();
 if(saved){
