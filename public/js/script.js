@@ -15,26 +15,13 @@ var MASKS=[
     {name:'Nearpod',icon:'https://nearpod.com/favicon.ico',title:'Nearpod'},
 ];
 
-var SLUGS={
-    'Slope':'slope','1v1.LOL':'1v1lol','Shell Shockers':'shellshockers',
-    'Retro Bowl':'retrobowl','Drift Hunters':'drifthunters','Tunnel Rush':'tunnelrush',
-    'Cookie Clicker':'cookieclicker','Paper.io':'paperio','Minecraft Classic':'minecraft',
-    'Geometry Dash':'geometrydash','Krunker.io':'krunker','Subway Surfers':'subwaysurfers'
+var GAMES=[];
+var ORIGINAL_GAME_SLUGS={
+    'slope':'slope','1v1lol':'1v1lol','shellshockers':'shellshockers',
+    'retrobowl':'retrobowl','drifthunters':'drifthunters','tunnelrush':'tunnelrush',
+    'cookieclicker':'cookieclicker','paperio':'paperio','minecraft':'minecraft',
+    'geometrydash':'geometrydash','krunker':'krunker','subwaysurfers':'subwaysurfers'
 };
-var GAMES=[
-    {name:'Slope',url:'https://slopegame.io'},
-    {name:'1v1.LOL',url:'https://1v1lol.io'},
-    {name:'Shell Shockers',url:'https://shellshock.io'},
-    {name:'Retro Bowl',url:'https://playretrobowl.com'},
-    {name:'Drift Hunters',url:'https://drift-hunters.io'},
-    {name:'Tunnel Rush',url:'https://tunnelrush.com'},
-    {name:'Cookie Clicker',url:'https://orteil.dashnet.org/cookieclicker'},
-    {name:'Paper.io',url:'https://paper-io.com'},
-    {name:'Minecraft Classic',url:'https://classic.minecraft.net'},
-    {name:'Geometry Dash',url:'https://geometrydash.io'},
-    {name:'Krunker.io',url:'https://krunker.io'},
-    {name:'Subway Surfers',url:'https://subwaysurfersgame.io'},
-];
 
 var $=function(s){return document.querySelector(s)};
 var proxyFrame=$('#proxy-frame'),welcome=$('#welcome-screen');
@@ -107,14 +94,23 @@ function go(raw){
 
 function renderGames(){
     gamesGrid.innerHTML='';
+    if(!GAMES.length){gamesGrid.innerHTML='<div class="game-name" style="padding:10px">Loading games...</div>';return}
     for(var i=0;i<GAMES.length;i++){(function(g){
         var tile=document.createElement('button');
         tile.className='game-tile';
-        var slug=SLUGS[g.name]||g.name.toLowerCase().replace(/\s+/g,'');
-        tile.innerHTML='<span class="game-icon"><img src="/gicons/'+slug+'.svg" alt=""></span><span class="game-name">'+g.name+'</span>';
+        var slug=g.slug;
+        var hasIcon=ORIGINAL_GAME_SLUGS[slug];
+        var icon=hasIcon?'<img src="/gicons/'+slug+'.svg" alt="">':'<span style="font-weight:700;color:#8b5cf6">'+g.name.charAt(0).toUpperCase()+'</span>';
+        tile.innerHTML='<span class="game-icon">'+icon+'</span><span class="game-name">'+g.name+'</span>';
         tile.addEventListener('click',function(){openGame(slug)});
         gamesGrid.appendChild(tile);
     })(GAMES[i])}
+}
+
+function loadGames(){
+    fetch('/api/games').then(function(r){return r.json()}).then(function(list){
+        GAMES=list;renderGames();
+    }).catch(function(){renderGames()});
 }
 
 function openGame(slug){
@@ -177,7 +173,7 @@ $('#cloak-btn').addEventListener('click',function(){maskOverlay.classList.remove
 
 function boot(){
     renderMaskSelector();
-    renderGames();
+    loadGames();
     renderSocials();
     var saved=loadCloak();
     if(saved){applyCloak(saved);maskOverlay.classList.add('hidden')}
