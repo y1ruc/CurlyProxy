@@ -41,33 +41,42 @@ app.get('/proxy', async function (req, res) {
         var finalUrl = fetchRes.url;
 
         var resHeaders = {};
-        var skip = ['content-encoding','content-length','transfer-encoding','x-frame-options','content-security-policy','x-content-type-options','cross-origin-embedder-policy','cross-origin-opener-policy','cross-origin-resource-policy','permissions-policy'];
+        var skip = [
+            'content-encoding','content-length','transfer-encoding',
+            'x-frame-options','content-security-policy','content-security-policy-report-only',
+            'x-content-type-options','cross-origin-embedder-policy',
+            'cross-origin-opener-policy','cross-origin-resource-policy','permissions-policy'
+        ];
         fetchRes.headers.forEach(function (v, k) {
             if (skip.indexOf(k.toLowerCase()) === -1) { resHeaders[k] = v; }
         });
 
         var isHtml = ct.indexOf('text/html') !== -1;
         var isCss = ct.indexOf('text/css') !== -1;
+        var isJs = ct.indexOf('javascript') !== -1 || ct.indexOf('ecmascript') !== -1;
 
-        if (isHtml || isCss) {
+        if (isHtml) {
             var body = await fetchRes.text();
-            if (isHtml) {
-                body = body.replace(/<head[^>]*>/i, '$&<base href="/proxy?url=' + enc(finalUrl) + '">');
-                body = rewriteUrls(body, finalUrl);
-            }
-            if (isCss) {
-                body = rewriteCssUrls(body, finalUrl);
-            }
+            body = body.replace(/<head[^>]*>/i, '$&<base href="/proxy?url=' + enc(finalUrl) + '">');
+            body = rewriteHtml(body, finalUrl);
             for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
-            res.setHeader('cache-control', 'public, max-age=30');
             res.send(body);
             if (body.length < 500000) {
                 if (cache.size >= MAX_CACHE) { cache.delete(cache.keys().next().value); }
                 cache.set(target, { ts: Date.now(), headers: resHeaders, body: body });
             }
+        } else if (isCss) {
+            var css = await fetchRes.text();
+            css = rewriteCss(css, finalUrl);
+            for (var h2 in resHeaders) { res.setHeader(h2, resHeaders[h2]); }
+            res.setHeader('cache-control', 'public, max-age=300');
+            res.send(css);
         } else {
             var buf = await fetchRes.arrayBuffer();
-            for (var h2 in resHeaders) { res.setHeader(h2, resHeaders[h2]); }
+            for (var h3 in resHeaders) { res.setHeader(h3, resHeaders[h3]); }
+            if (buf.byteLength < 1000000) {
+                res.setHeader('cache-control', 'public, max-age=300');
+            }
             res.send(Buffer.from(buf));
         }
     } catch (e) {
@@ -77,35 +86,48 @@ app.get('/proxy', async function (req, res) {
 
 function enc(s) { return encodeURIComponent(s); }
 
-function rewriteUrls(html, baseUrl) {
-    var base = new URL(baseUrl);
+function rewriteHtml(html, baseUrl) {
     var proxy = '/proxy?url=';
-    html = html.replace(/(\s)(src|href|action|data)=(["'])([^"'\s>]+?)(["'])/gi, function (m, sp, attr, q1, url, q2) {
-        if (/^(data:|#|javascript:|mailto:|blob:|about:)/i.test(url)) return m;
-        try { return sp + attr + q1 + proxy + enc(new URL(url, base).href) + q2; }
-        catch (_) { return m; }
-    });
-    html = html.replace(/srcset=["']([^"']+)["']/gi, function (m, val) {
-        var parts = val.split(/\s*,\s*/), out = [];
-        for (var i = 0; i < parts.length; i++) {
-            var bits = parts[i].trim().split(/\s+/), u = bits[0];
-            if (/^(data:|https?:\/\/)/i.test(u)) {
-                try { bits[0] = proxy + enc(new URL(u, base).href); } catch (_) {}
+    var base = new URL(baseUrl);
+
+    /* split into script blocks (skip rewriting inside) and non-script blocks */
+    var parts = html.split(/(<script[\s>][\s\S]*?<\/script>)/gi);
+    for (var i = 0; i < parts.length; i++) {
+        if (/^<script/i.test(parts[i])) continue; /* skip script tag content */
+        parts[i] = parts[i].replace(/(\s)(src|href|action)\s*=\s*(["'])([^"'\s>]+?)(["'])/gi,
+            function (m, sp, attr, q1, url, q2) {
+                if (/^(data:|#|javascript:|mailto:|blob:|about:)/i.test(url)) return m;
+                try { return sp + attr + '=' + q1 + proxy + enc(new URL(url, base).href) + q2; }
+                catch (_) { return m; }
             }
-            out.push(bits.join(' '));
-        }
-        return 'srcset="' + out.join(', ') + '"';
-    });
-    return html;
+        );
+        parts[i] = parts[i].replace(/srcset\s*=\s*(["'])([^"']+?)(["'])/gi,
+            function (m, q1, val, q2) {
+                var chunks = val.split(/\s*,\s*/), out = [];
+                for (var j = 0; j < chunks.length; j++) {
+                    var bits = chunks[j].trim().split(/\s+/), u = bits[0];
+                    if (/^(data:|https?:\/\/)/i.test(u)) {
+                        try { bits[0] = proxy + enc(new URL(u, base).href); } catch (_) {}
+                    }
+                    out.push(bits.join(' '));
+                }
+                return 'srcset=' + q1 + out.join(', ') + q2;
+            }
+        );
+    }
+    return parts.join('');
 }
 
-function rewriteCssUrls(css, baseUrl) {
-    var base = new URL(baseUrl), proxy = '/proxy?url=';
-    return css.replace(/url\(\s*["']?\s*([^)"'\s][^)"']*?)\s*["']?\s*\)/gi, function (m, url) {
-        if (/^(data:|#)/i.test(url)) return m;
-        try { return 'url("' + proxy + enc(new URL(url, base).href) + '")'; }
-        catch (_) { return m; }
-    });
+function rewriteCss(css, baseUrl) {
+    var proxy = '/proxy?url=';
+    var base = new URL(baseUrl);
+    return css.replace(/url\(\s*(["']?)([^)"']+?)\1\s*\)/gi,
+        function (m, q, url) {
+            if (/^(data:|#)/i.test(url)) return m;
+            try { return 'url("' + proxy + enc(new URL(url, base).href) + '")'; }
+            catch (_) { return m; }
+        }
+    );
 }
 
 var server = http.createServer(app);
