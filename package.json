@@ -1,0 +1,15 @@
+{
+  "name": "curlyproxy",
+  "version": "1.0.0",
+  "description": "CurlyProxy — unblocked proxy with reconnaissance",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "node setup.js"
+  },
+  "dependencies": {
+    "@titaniumnetwork-dev/ultraviolet": "1.0.11",
+    "@tomphttp/bare-server-node": "2.0.6",
+    "express": "^4.21.0"
+  }
+}

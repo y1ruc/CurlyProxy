@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CurlyProxy</title>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b5cf6' d='M4 12c0-2.5 1.5-4 4-4 1.5 0 2.8.6 4 1.5 1.2-.9 2.5-1.5 4-1.5 2.5 0 4 1.5 4 4s-1.5 4-4 4h-8c-2.5 0-4-1.5-4-4z'/%3E%3C/svg%3E">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+            <div class="brand" id="brand">
+                <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 12c0-2.5 1.5-4 4-4 1.5 0 2.8.6 4 1.5 1.2-.9 2.5-1.5 4-1.5 2.5 0 4 1.5 4 4s-1.5 4-4 4h-8c-2.5 0-4-1.5-4-4z" fill="url(#bg)"/><defs><linearGradient id="bg" x1="4" y1="8" x2="20" y2="16"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs></svg>
+                <span class="brand-text">CurlyProxy</span>
+            </div>
+            <div class="url-group">
+                <div class="url-bar" id="url-bar">
+                    <svg viewBox="0 0 24 24" width="14" height="14" class="url-icon"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <input type="text" class="url-input" id="url-input" placeholder="Enter URL" autocomplete="off" spellcheck="false">
+                </div>
+                <button class="go-btn" id="go-btn">Go</button>
+            </div>
+        </div>
+
+        <nav class="tabs" id="tab-list"></nav>
+
+        <div class="sidebar-bottom">
+            <button class="new-tab-btn" id="add-tab">
+                <svg viewBox="0 0 24 24" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <span>New Tab</span>
+            </button>
+            <button class="games-toggle" id="games-toggle">
+                <svg viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="3" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>Games</span>
+            </button>
+            <div class="status-row">
+                <span class="status-dot" id="status-dot"></span>
+                <span class="status-text" id="status-text">online</span>
+                <button class="fs-btn" id="fs-btn" title="Fullscreen">
+                    <svg viewBox="0 0 24 24" width="14" height="14"><polyline points="15 3 21 3 21 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="9 21 3 21 3 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="3" x2="14" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="21" x2="10" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main" id="main">
+        <div class="welcome" id="welcome-screen">
+            <svg viewBox="0 0 40 40" width="44" height="44"><path d="M6 20c0-4.5 2.5-7 6-7 2.5 0 4.5 1 6 2.5 2-1.5 3.5-2.5 6-2.5 3.5 0 6 2.5 6 7s-2.5 7-6 7H12c-3.5 0-6-2.5-6-7z" fill="url(#wl)"/><defs><linearGradient id="wl" x1="6" y1="13" x2="34" y2="27"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs></svg>
+            <h2>CurlyProxy</h2>
+            <p>Type a URL in the sidebar to get started.</p>
+        </div>
+        <iframe class="frame" id="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" style="display:none"></iframe>
+    </main>
+</div>
+
+<div class="games-overlay" id="games-overlay">
+    <div class="games-overlay-backdrop" id="games-backdrop"></div>
+    <div class="games-panel" id="games-panel">
+        <div class="games-header">
+            <h3>Game Library</h3>
+            <button class="games-close" id="games-close">
+                <svg viewBox="0 0 24 24" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="games-grid" id="games-grid"></div>
+    </div>
+</div>
+
+<script src="/js/script.js"></script>
+</body>
+</html>
