@@ -59,7 +59,7 @@ app.get('/proxy', async function (req, res) {
             var body = await fetchRes.text();
             body = body.replace(/<base\s+[^>]*>/gi, '');
             body = rewriteHtml(body, finalUrl);
-            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '">');
+            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '"><script>(function(){var e=/\\/404|\\/blocked|\\/403|\\/captcha|\\/login\\b|\\/signin\\b/;Object.defineProperty(document.documentElement,"_lp",{value:location,configurable:true});var t=function(n){var u=String(n);if(e.test(u)){console.log("[proxy] blocked:",u);return true}return false};var o=HTMLLinkElement.prototype;try{Object.defineProperty(window,"location",{get:function(){return document.documentElement._lp},set:function(n){if(!t(n))document.documentElement._lp=n},configurable:true})}catch(r){}try{Object.defineProperty(document,"location",{get:function(){return document.documentElement._lp},set:function(n){if(!t(n))document.documentElement._lp=n},configurable:true})}catch(r){}window.addEventListener("beforeunload",function(r){return null});})();</script>');
             for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
             res.send(body);
             if (body.length < 500000) {
