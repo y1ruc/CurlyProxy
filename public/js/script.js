@@ -1,4 +1,20 @@
 (function(){'use strict';
+
+var MASKS=[
+    {name:'Google Classroom',icon:'https://ssl.gstatic.com/classroom/favicon.png',title:'Home'},
+    {name:'Google Drive',icon:'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png',title:'My Drive - Google Drive'},
+    {name:'Google Docs',icon:'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico',title:'Google Docs'},
+    {name:'Google Slides',icon:'https://ssl.gstatic.com/docs/presentations/images/favicon5.ico',title:'Google Slides'},
+    {name:'Khan Academy',icon:'https://cdn.kastatic.org/images/favicon.ico',title:'Khan Academy'},
+    {name:'Desmos',icon:'https://www.desmos.com/favicon.ico',title:'Desmos | Graphing Calculator'},
+    {name:'Quizlet',icon:'https://quizlet.com/favicon.ico',title:'Quizlet'},
+    {name:'EdPuzzle',icon:'https://edpuzzle.com/favicon.ico',title:'Edpuzzle'},
+    {name:'Clever',icon:'https://clever.com/favicon.ico',title:'Clever | Portal'},
+    {name:'Schoology',icon:'https://www.schoology.com/favicon.ico',title:'Schoology'},
+    {name:'Canvas',icon:'https://www.instructure.com/favicon.ico',title:'Canvas'},
+    {name:'Nearpod',icon:'https://nearpod.com/favicon.ico',title:'Nearpod'},
+];
+
 var SLUGS={
     'Slope':'slope','1v1.LOL':'1v1lol','Shell Shockers':'shellshockers',
     'Retro Bowl':'retrobowl','Drift Hunters':'drifthunters','Tunnel Rush':'tunnelrush',
@@ -21,20 +37,50 @@ var GAMES=[
 ];
 
 var $=function(s){return document.querySelector(s)};
-var urlInput=$('#url-input'),goBtn=$('#go-btn'),refreshBtn=$('#refresh-btn');
-var proxyFrame=$('#proxy-frame'),welcomeScreen=$('#welcome-screen');
-var tabListEl=$('#tab-list'),gamesOverlay=$('#games-overlay');
-var gamesBackdrop=$('#games-backdrop'),gamesGrid=$('#games-grid');
-var gamesToggle=$('#games-toggle'),gamesClose=$('#games-close');
-var fsBtn=$('#fs-btn'),brand=$('#brand');
-var tabs=[],activeTabId=null,fsOn=false;
+var proxyFrame=$('#proxy-frame'),welcome=$('#welcome-screen');
+var urlInput=$('#url-input'),goBtn=$('#go-btn'),tabListEl=$('#tab-list');
+var gamesOverlay=$('#games-overlay'),gamesBackdrop=$('#games-backdrop'),gamesGrid=$('#games-grid');
+var maskOverlay=$('#mask-overlay'),maskGrid=$('#mask-grid');
+var fullscreenBtn=$('#fullscreen-btn');
 
+var tabs=[],activeTabId=null,fsOn=false,cloak=null;
+
+/* ── Cloak ── */
+function applyCloak(m){
+    cloak=m;
+    document.getElementById('page-title').textContent=m.title;
+    document.getElementById('page-favicon').href=m.icon;
+    document.getElementById('cloak-label').textContent=m.name;
+    try{localStorage.setItem('curly_cloak',JSON.stringify(m))}catch(_){}
+}
+
+function loadCloak(){
+    try{var raw=localStorage.getItem('curly_cloak');if(raw)return JSON.parse(raw)}catch(_){}
+    return null;
+}
+
+function renderMaskSelector(){
+    maskGrid.innerHTML='';
+    for(var i=0;i<MASKS.length;i++){(function(m){
+        var btn=document.createElement('button');
+        btn.className='mask-tile';
+        btn.innerHTML='<img src="'+m.icon+'" alt="" onerror="this.style.display=\'none\'"><span>'+m.name+'</span>';
+        btn.addEventListener('click',function(){
+            applyCloak(m);
+            maskOverlay.classList.add('hidden');
+        });
+        maskGrid.appendChild(btn);
+    })(MASKS[i])}
+}
+
+/* ── Webhook ── */
 function ping(p,b){fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})}).catch(function(){})}
 
+/* ── URL ── */
 function fix(u){u=(u||'').trim();if(!u)return'';if(/^https?:\/\//i.test(u))return u;if(u.includes('.')&&!u.includes(' '))return'https://'+u;return'https://www.google.com/search?q='+encodeURIComponent(u)}
 function host(u){try{return new URL(u).hostname.replace('www.','')}catch(_){return u||''}}
 
-/* tabs */
+/* ── Tabs ── */
 function mkTab(url){var t={id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),url:url||'',title:url?host(url):'New Tab'};tabs.push(t);return t}
 
 function dropTab(id){
@@ -54,21 +100,20 @@ function switchTab(id){
 function loadTab(t){
     if(t.url){
         proxyFrame.src='/proxy?url='+encodeURIComponent(fix(t.url));
-        welcomeScreen.style.display='none';proxyFrame.style.display='block';
+        welcome.style.display='none';proxyFrame.style.display='block';
     }else{
-        proxyFrame.src='about:blank';welcomeScreen.style.display='flex';proxyFrame.style.display='none';
+        proxyFrame.src='about:blank';welcome.style.display='flex';proxyFrame.style.display='none';
     }
 }
 
-function showHome(){welcomeScreen.style.display='flex';proxyFrame.style.display='none';urlInput.value='';activeTabId=null;drawTabs()}
+function showHome(){welcome.style.display='flex';proxyFrame.style.display='none';urlInput.value='';activeTabId=null;drawTabs()}
 
 function drawTabs(){
     tabListEl.innerHTML='';
     for(var i=0;i<tabs.length;i++){(function(t){
         var el=document.createElement('div');
         el.className='tab'+(t.id===activeTabId?' active':'');
-        var l=t.title&&t.title!=='New Tab'?t.title.charAt(0).toUpperCase():'~';
-        el.innerHTML='<span class="tab-icon">'+esc(l)+'</span><span class="tab-title">'+esc(t.title)+'</span><button class="tab-close">&times;</button>';
+        el.innerHTML='<span class="tab-title">'+esc(t.title)+'</span><button class="tab-close">&times;</button>';
         el.addEventListener('click',function(e){if(!e.target.closest('.tab-close'))switchTab(t.id)});
         el.querySelector('.tab-close').addEventListener('click',function(e){e.stopPropagation();dropTab(t.id)});
         tabListEl.appendChild(el);
@@ -77,23 +122,18 @@ function drawTabs(){
 
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
-/* nav */
+/* ── Nav ── */
 function go(raw){
     raw=(raw||'').trim();if(!raw)return;var u=fix(raw);if(!u)return;
     var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===activeTabId){t=tabs[i];break}}
     if(!t||!t.url){t=mkTab(u)}else{t.url=u;t.title=host(u)}
     activeTabId=t.id;urlInput.value=u;
     proxyFrame.src='/proxy?url='+encodeURIComponent(u);
-    welcomeScreen.style.display='none';proxyFrame.style.display='block';
+    welcome.style.display='none';proxyFrame.style.display='block';
     drawTabs();ping('/api/log-proxy',{url:u,title:t.title});
 }
 
-function refresh(){
-    var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===activeTabId){t=tabs[i];break}}
-    if(t&&t.url){proxyFrame.src=proxyFrame.src}
-}
-
-/* games */
+/* ── Games ── */
 function renderGames(){
     gamesGrid.innerHTML='';
     for(var i=0;i<GAMES.length;i++){(function(g){
@@ -109,19 +149,42 @@ function renderGames(){
 function openGames(){gamesOverlay.classList.add('show')}
 function closeGames(){gamesOverlay.classList.remove('show')}
 
-/* events */
+/* ── Events ── */
 goBtn.addEventListener('click',function(){go(urlInput.value)});
 urlInput.addEventListener('keydown',function(e){if(e.key==='Enter')go(urlInput.value)});
-refreshBtn.addEventListener('click',refresh);
-$('#add-tab').addEventListener('click',function(){var t=mkTab('');activeTabId=t.id;showHome();drawTabs()});
-gamesToggle.addEventListener('click',openGames);
-gamesClose.addEventListener('click',closeGames);
-gamesBackdrop.addEventListener('click',closeGames);
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(gamesOverlay.classList.contains('show'))closeGames();else if(fsOn){fsOn=false;document.body.classList.remove('fs')}}});
-fsBtn.addEventListener('click',function(){fsOn=!fsOn;document.body.classList.toggle('fs',fsOn)});
-brand.addEventListener('click',function(){showHome()});
 
-/* boot */
-renderGames();ping('/api/connect');
+$('#nav-back').addEventListener('click',function(){try{proxyFrame.contentWindow.history.back()}catch(_){}});
+$('#nav-fwd').addEventListener('click',function(){try{proxyFrame.contentWindow.history.forward()}catch(_){}});
+$('#nav-refresh').addEventListener('click',function(){if(proxyFrame.src&&proxyFrame.src!=='about:blank'){proxyFrame.src=proxyFrame.src}});
+
+$('#add-tab').addEventListener('click',function(){var t=mkTab('');activeTabId=t.id;showHome();drawTabs()});
+
+$('#games-toggle').addEventListener('click',openGames);
+$('#games-close').addEventListener('click',closeGames);
+gamesBackdrop.addEventListener('click',closeGames);
+
+document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+        if(gamesOverlay.classList.contains('show'))closeGames();
+        else if(fsOn){fsOn=false;document.body.classList.remove('fs')}
+    }
+});
+
+fullscreenBtn.addEventListener('click',function(){fsOn=!fsOn;document.body.classList.toggle('fs',fsOn)});
+
+$('#cloak-btn').addEventListener('click',function(){maskOverlay.classList.remove('hidden')});
+
+/* ── Boot ── */
+renderMaskSelector();
+renderGames();
+ping('/api/connect');
+
+var saved=loadCloak();
+if(saved){
+    applyCloak(saved);
+    maskOverlay.classList.add('hidden');
+}
+
 mkTab('');activeTabId=tabs[0].id;drawTabs();
+
 })();
