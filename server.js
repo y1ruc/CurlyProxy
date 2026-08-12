@@ -222,14 +222,12 @@ app.get('/game/:slug', function (req, res) {
     var game = GAMES[slug];
     if (!game) return res.status(404).send('Game not found');
 
-    var proxyUrl = '/proxy?url=' + encodeURIComponent(game.url);
+    var proxyUrl = toPath(game.url);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + game.name + '</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;position:fixed;inset:0}.bar{position:fixed;top:12px;left:12px;z-index:10;display:flex;align-items:center;gap:10px}.bar button{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;cursor:pointer;font-size:13px;font-family:inherit;backdrop-filter:blur(8px)}.bar button:hover{background:rgba(0,0,0,.8)}.bar span{padding:8px 14px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-size:13px;backdrop-filter:blur(8px)}</style></head><body><div class="bar"><button onclick="history.back()"><svg viewBox="0 0 24 24" width="16" height="16"><polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Back</button><span>' + game.name + '</span></div><iframe src="' + proxyUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-pointer-lock allow-top-navigation allow-presentation allow-orientation-lock allow-downloads"></iframe></body></html>');
 });
 
-app.all('/proxy', async function (req, res) {
-    var target = req.query.url;
-    if (!target) return res.status(400).send('missing url');
+function proxyCore(target, req, res) {
     if (!/^https?:\/\//i.test(target)) return res.status(400).send('bad url');
 
     var cached = cache.get(target);
@@ -238,93 +236,111 @@ app.all('/proxy', async function (req, res) {
         return res.send(cached.body);
     }
 
-    try {
-        var fetchOpts = {
-            method: req.method,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate, br',
-            },
-            redirect: 'follow',
-            agent: function (u) { return u.protocol === 'https:' ? httpsAgent : httpAgent; },
-        };
-        if (req.method !== 'GET' && req.method !== 'HEAD') {
-            var chunks = [];
-            req.on('data', function (c) { chunks.push(c); });
-            await new Promise(function (resolve) { req.on('end', resolve); });
-            if (chunks.length > 0) {
-                fetchOpts.body = Buffer.concat(chunks);
-                var ct2 = req.headers['content-type'];
-                if (ct2) fetchOpts.headers['Content-Type'] = ct2;
+    (async function () {
+        try {
+            var fetchOpts = {
+                method: req.method,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                },
+                redirect: 'follow',
+                agent: function (u) { return u.protocol === 'https:' ? httpsAgent : httpAgent; },
+            };
+            if (req.method !== 'GET' && req.method !== 'HEAD') {
+                var chunks = [];
+                req.on('data', function (c) { chunks.push(c); });
+                await new Promise(function (resolve) { req.on('end', resolve); });
+                if (chunks.length > 0) {
+                    fetchOpts.body = Buffer.concat(chunks);
+                    var ct2 = req.headers['content-type'];
+                    if (ct2) fetchOpts.headers['Content-Type'] = ct2;
+                }
             }
-        }
 
-        var fetchRes = await fetch(target, fetchOpts);
+            var fetchRes = await fetch(target, fetchOpts);
+            var ct = fetchRes.headers.get('content-type') || '';
+            var finalUrl = fetchRes.url;
 
-        var ct = fetchRes.headers.get('content-type') || '';
-        var finalUrl = fetchRes.url;
+            var resHeaders = {};
+            var skip = [
+                'content-encoding','content-length','transfer-encoding',
+                'x-frame-options','content-security-policy','content-security-policy-report-only',
+                'x-content-type-options','cross-origin-embedder-policy',
+                'cross-origin-opener-policy','cross-origin-resource-policy','permissions-policy'
+            ];
+            fetchRes.headers.forEach(function (v, k) {
+                if (skip.indexOf(k.toLowerCase()) === -1) { resHeaders[k] = v; }
+            });
 
-        var resHeaders = {};
-        var skip = [
-            'content-encoding','content-length','transfer-encoding',
-            'x-frame-options','content-security-policy','content-security-policy-report-only',
-            'x-content-type-options','cross-origin-embedder-policy',
-            'cross-origin-opener-policy','cross-origin-resource-policy','permissions-policy'
-        ];
-        fetchRes.headers.forEach(function (v, k) {
-            if (skip.indexOf(k.toLowerCase()) === -1) { resHeaders[k] = v; }
-        });
+            var isHtml = ct.indexOf('text/html') !== -1;
+            var isCss = ct.indexOf('text/css') !== -1;
 
-        var isHtml = ct.indexOf('text/html') !== -1;
-        var isCss = ct.indexOf('text/css') !== -1;
-        var isJs = ct.indexOf('javascript') !== -1 || ct.indexOf('ecmascript') !== -1;
-
-        if (isHtml) {
-            var body = await fetchRes.text();
-            body = body.replace(/<base\s+[^>]*>/gi, '');
-            body = rewriteHtml(body, finalUrl);
-            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '"><script>new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(function(n){if(n.tagName==="SCRIPT"){var v=n.getAttribute("src");if(v&&v.indexOf(location.origin)===-1&&!/^(data|blob):/.test(v)){try{n.src="/proxy?url="+encodeURIComponent(new URL(v,location.href).href)}catch(e){}}}if(n.tagName==="LINK"&&n.rel==="stylesheet"){var h=n.getAttribute("href");if(h&&h.indexOf(location.origin)===-1&&!/^(data|blob):/.test(h)){try{n.href="/proxy?url="+encodeURIComponent(new URL(h,location.href).href)}catch(e){}}}if(n.tagName==="IMG"){var s=n.getAttribute("src");if(s&&s.indexOf(location.origin)===-1&&!/^(data|blob):/.test(s)){try{n.src="/proxy?url="+encodeURIComponent(new URL(s,location.href).href)}catch(e){}}}})});}).observe(document.documentElement,{childList:true,subtree:true});</script>');
-            for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
-            res.send(body);
-            if (body.length < 500000) {
-                if (cache.size >= MAX_CACHE) { cache.delete(cache.keys().next().value); }
-                cache.set(target, { ts: Date.now(), headers: resHeaders, body: body });
-            }
-        } else if (isCss) {
-            var css = await fetchRes.text();
-            css = rewriteCss(css, finalUrl);
-            for (var h2 in resHeaders) { res.setHeader(h2, resHeaders[h2]); }
-            res.setHeader('cache-control', 'public, max-age=300');
-            res.send(css);
-        } else {
-            var buf = await fetchRes.arrayBuffer();
-            for (var h3 in resHeaders) { res.setHeader(h3, resHeaders[h3]); }
-            if (buf.byteLength < 1000000) {
+            if (isHtml) {
+                var body = await fetchRes.text();
+                body = body.replace(/<base\s+[^>]*>/gi, '');
+                body = rewriteHtmlPath(body, finalUrl);
+                for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
+                res.send(body);
+                if (body.length < 500000) {
+                    if (cache.size >= MAX_CACHE) { cache.delete(cache.keys().next().value); }
+                    cache.set(target, { ts: Date.now(), headers: resHeaders, body: body });
+                }
+            } else if (isCss) {
+                var css = await fetchRes.text();
+                css = rewriteCssPath(css, finalUrl);
+                for (var h2 in resHeaders) { res.setHeader(h2, resHeaders[h2]); }
                 res.setHeader('cache-control', 'public, max-age=300');
+                res.send(css);
+            } else {
+                var buf = await fetchRes.arrayBuffer();
+                for (var h3 in resHeaders) { res.setHeader(h3, resHeaders[h3]); }
+                if (buf.byteLength < 1000000) {
+                    res.setHeader('cache-control', 'public, max-age=300');
+                }
+                res.send(Buffer.from(buf));
             }
-            res.send(Buffer.from(buf));
+        } catch (e) {
+            res.status(502).send('proxy error');
         }
-    } catch (e) {
-        res.status(502).send('proxy error');
-    }
+    })();
+}
+
+app.all('/proxy', function (req, res) {
+    proxyCore(req.query.url, req, res);
 });
 
-function enc(s) { return encodeURIComponent(s); }
+app.all(/^\/proxy\/(https?)\/([^/]+)(\/.*)?$/, function (req, res) {
+    var scheme = req.params[0];
+    var host = req.params[1];
+    var rest = req.params[2] || '/';
+    var target = scheme + '://' + host + rest;
+    if (req.originalUrl.indexOf('?') !== -1) {
+        target += req.originalUrl.substring(req.originalUrl.indexOf('?'));
+    }
+    proxyCore(target, req, res);
+});
 
-function rewriteHtml(html, baseUrl) {
-    var proxy = '/proxy?url=';
+function toPath(u) {
+    if (!u) return '';
+    var abs;
+    try { abs = new URL(u).href; } catch (_) { return u; }
+    var p = new URL(abs);
+    return '/proxy/' + p.protocol.replace(':', '') + '/' + p.host + p.pathname + (p.search || '');
+}
+
+function rewriteHtmlPath(html, baseUrl) {
     var base = new URL(baseUrl);
-
-    /* split into script blocks (skip rewriting inside) and non-script blocks */
     var parts = html.split(/(<script[\s>][\s\S]*?<\/script>)/gi);
     for (var i = 0; i < parts.length; i++) {
-        if (/^<script/i.test(parts[i])) continue; /* skip script tag content */
+        if (/^<script/i.test(parts[i])) continue;
         parts[i] = parts[i].replace(/(\s)(src|href|action)\s*=\s*(["'])([^"'\s>]+?)(["'])/gi,
             function (m, sp, attr, q1, url, q2) {
-                if (/^(data:|#|javascript:|mailto:|blob:|about:|\/proxy\?url=)/i.test(url)) return m;
-                try { return sp + attr + '=' + q1 + proxy + enc(new URL(url, base).href) + q2; }
+                if (/^(data:|#|javascript:|mailto:|blob:|about:)/i.test(url)) return m;
+                if (/^\/proxy\//i.test(url)) return m;
+                try { return sp + attr + '=' + q1 + toPath(new URL(url, base).href) + q2; }
                 catch (_) { return m; }
             }
         );
@@ -333,8 +349,8 @@ function rewriteHtml(html, baseUrl) {
                 var chunks = val.split(/\s*,\s*/), out = [];
                 for (var j = 0; j < chunks.length; j++) {
                     var bits = chunks[j].trim().split(/\s+/), u = bits[0];
-                    if (/^(data:|https?:\/\/)/i.test(u)) {
-                        try { bits[0] = proxy + enc(new URL(u, base).href); } catch (_) {}
+                    if (/^(data:|https?:\/\/)/i.test(u) && !/^\/proxy\//i.test(u)) {
+                        try { bits[0] = toPath(new URL(u, base).href); } catch (_) {}
                     }
                     out.push(bits.join(' '));
                 }
@@ -345,13 +361,12 @@ function rewriteHtml(html, baseUrl) {
     return parts.join('');
 }
 
-function rewriteCss(css, baseUrl) {
-    var proxy = '/proxy?url=';
+function rewriteCssPath(css, baseUrl) {
     var base = new URL(baseUrl);
     return css.replace(/url\(\s*(["']?)([^)"']+?)\1\s*\)/gi,
         function (m, q, url) {
-            if (/^(data:|#)/i.test(url)) return m;
-            try { return 'url("' + proxy + enc(new URL(url, base).href) + '")'; }
+            if (/^(data:|#)/i.test(url) || /^\/proxy\//i.test(url)) return m;
+            try { return 'url("' + toPath(new URL(url, base).href) + '")'; }
             catch (_) { return m; }
         }
     );
