@@ -5,7 +5,8 @@ const path = require('path');
 const zlib = require('zlib');
 
 const PORT = process.env.PORT || 3000;
-const CACHE_TTL = 30000;
+const CACHE_TTL = 60000;
+const MAX_CACHE = 200;
 const cache = new Map();
 
 const app = express();
@@ -122,6 +123,10 @@ app.get('/proxy', async function (req, res) {
             res.send(body);
 
             if (body.length < 500000) {
+                if (cache.size >= MAX_CACHE) {
+                    var firstKey = cache.keys().next().value;
+                    cache.delete(firstKey);
+                }
                 cache.set(target, { ts: Date.now(), headers: resHeaders, body: body });
             }
         } else {
