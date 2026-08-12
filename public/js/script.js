@@ -22,12 +22,12 @@ var SLUGS={
     'Geometry Dash':'geometrydash','Krunker.io':'krunker','Subway Surfers':'subwaysurfers'
 };
 var GAMES=[
-    {name:'Slope',url:'https://slope3d.com'},
+    {name:'Slope',url:'https://slopegame.io'},
     {name:'1v1.LOL',url:'https://1v1lol.io'},
     {name:'Shell Shockers',url:'https://shellshock.io'},
     {name:'Retro Bowl',url:'https://playretrobowl.com'},
-    {name:'Drift Hunters',url:'https://drift-hunters2.com'},
-    {name:'Tunnel Rush',url:'https://tunnelrush.app'},
+    {name:'Drift Hunters',url:'https://drift-hunters.io'},
+    {name:'Tunnel Rush',url:'https://tunnelrush.com'},
     {name:'Cookie Clicker',url:'https://orteil.dashnet.org/cookieclicker'},
     {name:'Paper.io',url:'https://paper-io.com'},
     {name:'Minecraft Classic',url:'https://classic.minecraft.net'},
@@ -43,11 +43,9 @@ var gamesOverlay=$('#games-overlay'),gamesBackdrop=$('#games-backdrop'),gamesGri
 var maskOverlay=$('#mask-overlay'),maskGrid=$('#mask-grid');
 var fullscreenBtn=$('#fullscreen-btn');
 
-var tabs=[],activeTabId=null,fsOn=false,cloak=null;
+var tabs=[],activeTabId=null,fsOn=false;
 
-/* ── Cloak ── */
 function applyCloak(m){
-    cloak=m;
     document.getElementById('page-title').textContent=m.title;
     document.getElementById('page-favicon').href=m.icon;
     document.getElementById('cloak-label').textContent=m.name;
@@ -65,47 +63,24 @@ function renderMaskSelector(){
         var btn=document.createElement('button');
         btn.className='mask-tile';
         btn.innerHTML='<img src="'+m.icon+'" alt="" onerror="this.style.display=\'none\'"><span>'+m.name+'</span>';
-        btn.addEventListener('click',function(){
-            applyCloak(m);
-            maskOverlay.classList.add('hidden');
-        });
+        btn.addEventListener('click',function(){applyCloak(m);maskOverlay.classList.add('hidden')});
         maskGrid.appendChild(btn);
     })(MASKS[i])}
 }
 
-
-/* ── URL ── */
 function fix(u){u=(u||'').trim();if(!u)return'';if(/^https?:\/\//i.test(u))return u;if(u.includes('.')&&!u.includes(' '))return'https://'+u;return'https://www.google.com/search?q='+encodeURIComponent(u)}
 function host(u){try{return new URL(u).hostname.replace('www.','')}catch(_){return u||''}}
 
-/* ── Tabs ── */
 function mkTab(url){var t={id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),url:url||'',title:url?host(url):'New Tab'};tabs.push(t);return t}
-
 function dropTab(id){
     var i=-1,j;for(j=0;j<tabs.length;j++){if(tabs[j].id===id){i=j;break}}if(i===-1)return;
     tabs.splice(i,1);
-    if(activeTabId===id){
-        if(tabs.length){switchTab(tabs[Math.min(i,tabs.length-1)].id)}
-        else{activeTabId=null;showHome()}
-    }drawTabs();
+    if(activeTabId===id){if(tabs.length){switchTab(tabs[Math.min(i,tabs.length-1)].id)}else{activeTabId=null;showHome()}}
+    drawTabs();
 }
-
-function switchTab(id){
-    var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===id){t=tabs[i];break}}if(!t)return;
-    activeTabId=id;urlInput.value=t.url||'';loadTab(t);drawTabs();
-}
-
-function loadTab(t){
-    if(t.url){
-        proxyFrame.src='/proxy?url='+encodeURIComponent(fix(t.url));
-        welcome.style.display='none';proxyFrame.style.display='block';
-    }else{
-        proxyFrame.src='about:blank';welcome.style.display='flex';proxyFrame.style.display='none';
-    }
-}
-
+function switchTab(id){var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===id){t=tabs[i];break}}if(!t)return;activeTabId=id;urlInput.value=t.url||'';loadTab(t);drawTabs()}
+function loadTab(t){if(t.url){proxyFrame.src='/proxy?url='+encodeURIComponent(fix(t.url));welcome.style.display='none';proxyFrame.style.display='block'}else{proxyFrame.src='about:blank';welcome.style.display='flex';proxyFrame.style.display='none'}}
 function showHome(){welcome.style.display='flex';proxyFrame.style.display='none';urlInput.value='';activeTabId=null;drawTabs()}
-
 function drawTabs(){
     tabListEl.innerHTML='';
     for(var i=0;i<tabs.length;i++){(function(t){
@@ -117,10 +92,8 @@ function drawTabs(){
         tabListEl.appendChild(el);
     })(tabs[i])}
 }
-
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
-/* ── Nav ── */
 function go(raw){
     raw=(raw||'').trim();if(!raw)return;var u=fix(raw);if(!u)return;
     var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===activeTabId){t=tabs[i];break}}
@@ -131,7 +104,6 @@ function go(raw){
     drawTabs();
 }
 
-/* ── Games ── */
 function renderGames(){
     gamesGrid.innerHTML='';
     for(var i=0;i<GAMES.length;i++){(function(g){
@@ -147,41 +119,27 @@ function renderGames(){
 function openGames(){gamesOverlay.classList.add('show')}
 function closeGames(){gamesOverlay.classList.remove('show')}
 
-/* ── Events ── */
 goBtn.addEventListener('click',function(){go(urlInput.value)});
 urlInput.addEventListener('keydown',function(e){if(e.key==='Enter')go(urlInput.value)});
-
 $('#nav-back').addEventListener('click',function(){try{proxyFrame.contentWindow.history.back()}catch(_){}});
 $('#nav-fwd').addEventListener('click',function(){try{proxyFrame.contentWindow.history.forward()}catch(_){}});
 $('#nav-refresh').addEventListener('click',function(){if(proxyFrame.src&&proxyFrame.src!=='about:blank'){proxyFrame.src=proxyFrame.src}});
-
 $('#add-tab').addEventListener('click',function(){var t=mkTab('');activeTabId=t.id;showHome();drawTabs()});
-
 $('#games-toggle').addEventListener('click',openGames);
 $('#games-close').addEventListener('click',closeGames);
 gamesBackdrop.addEventListener('click',closeGames);
-
-document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'){
-        if(gamesOverlay.classList.contains('show'))closeGames();
-        else if(fsOn){fsOn=false;document.body.classList.remove('fs')}
-    }
-});
-
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(gamesOverlay.classList.contains('show'))closeGames();else if(fsOn){fsOn=false;document.body.classList.remove('fs')}}});
 fullscreenBtn.addEventListener('click',function(){fsOn=!fsOn;document.body.classList.toggle('fs',fsOn)});
-
 $('#cloak-btn').addEventListener('click',function(){maskOverlay.classList.remove('hidden')});
 
-/* ── Boot ── */
-renderMaskSelector();
-renderGames();
-
-var saved=loadCloak();
-if(saved){
-    applyCloak(saved);
-    maskOverlay.classList.add('hidden');
+function boot(){
+    renderMaskSelector();
+    renderGames();
+    var saved=loadCloak();
+    if(saved){applyCloak(saved);maskOverlay.classList.add('hidden')}
+    mkTab('');activeTabId=tabs[0].id;drawTabs();
+    if(navigator.serviceWorker){navigator.serviceWorker.register('/sw.js')}
 }
 
-mkTab('');activeTabId=tabs[0].id;drawTabs();
-
+boot();
 })();
