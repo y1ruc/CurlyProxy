@@ -57,8 +57,9 @@ app.get('/proxy', async function (req, res) {
 
         if (isHtml) {
             var body = await fetchRes.text();
-            body = body.replace(/<head[^>]*>/i, '$&<base href="/proxy?url=' + enc(finalUrl) + '">');
+            body = body.replace(/<base\s+[^>]*>/gi, '');
             body = rewriteHtml(body, finalUrl);
+            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '">');
             for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
             res.send(body);
             if (body.length < 500000) {
@@ -96,7 +97,7 @@ function rewriteHtml(html, baseUrl) {
         if (/^<script/i.test(parts[i])) continue; /* skip script tag content */
         parts[i] = parts[i].replace(/(\s)(src|href|action)\s*=\s*(["'])([^"'\s>]+?)(["'])/gi,
             function (m, sp, attr, q1, url, q2) {
-                if (/^(data:|#|javascript:|mailto:|blob:|about:)/i.test(url)) return m;
+                if (/^(data:|#|javascript:|mailto:|blob:|about:|\/proxy\?url=)/i.test(url)) return m;
                 try { return sp + attr + '=' + q1 + proxy + enc(new URL(url, base).href) + q2; }
                 catch (_) { return m; }
             }
