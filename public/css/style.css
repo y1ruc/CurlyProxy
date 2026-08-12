@@ -152,26 +152,26 @@ body{
 #fullscreen-btn{margin-left:auto}
 
 /* Games Overlay */
-.games-overlay{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center}
-.games-overlay.show{display:flex}
-.games-overlay-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px)}
-.games-panel{
+.games-overlay,.overlay{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center}
+.games-overlay.show,.overlay.show{display:flex}
+.games-overlay-backdrop,.overlay-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+.games-panel,.overlay-panel{
     position:relative;width:520px;max-width:90vw;max-height:80vh;
     background:#11111c;border:1px solid rgba(255,255,255,.06);border-radius:14px;
     padding:20px;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5);
 }
-.games-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.games-header h3{font-size:13px;font-weight:600}
-#games-close{width:26px;height:26px;border-radius:6px;border:none;background:transparent;color:#6b6b76;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s}
-#games-close:hover{background:rgba(255,255,255,.05);color:#e4e4e7}
+.games-header,.overlay-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.games-header h3,.overlay-header h3{font-size:13px;font-weight:600}
+#games-close,#socials-close{width:26px;height:26px;border-radius:6px;border:none;background:transparent;color:#6b6b76;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s}
+#games-close:hover,#socials-close:hover{background:rgba(255,255,255,.05);color:#e4e4e7}
 
-.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
-.game-tile{
+.games-grid,.overlay-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
+.game-tile,.social-tile{
     display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;
     background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;
     cursor:pointer;transition:all .1s;color:#e4e4e7;font-family:var(--font);border:none;text-align:center;
 }
-.game-tile:hover{background:rgba(255,255,255,.06);transform:translateY(-1px)}
+.game-tile:hover,.social-tile:hover{background:rgba(255,255,255,.06);transform:translateY(-1px)}
 .game-icon{width:32px;height:32px}
 .game-icon img{width:100%;height:100%}
 .game-name{font-size:11px;font-weight:500;line-height:1.2}

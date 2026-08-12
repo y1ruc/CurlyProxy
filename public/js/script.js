@@ -40,6 +40,7 @@ var $=function(s){return document.querySelector(s)};
 var proxyFrame=$('#proxy-frame'),welcome=$('#welcome-screen');
 var urlInput=$('#url-input'),goBtn=$('#go-btn'),tabListEl=$('#tab-list');
 var gamesOverlay=$('#games-overlay'),gamesBackdrop=$('#games-backdrop'),gamesGrid=$('#games-grid');
+var socialsOverlay=$('#socials-overlay'),socialsBackdrop=$('#socials-backdrop'),socialsGrid=$('#socials-grid');
 var maskOverlay=$('#mask-overlay'),maskGrid=$('#mask-grid');
 var fullscreenBtn=$('#fullscreen-btn');
 
@@ -119,6 +120,35 @@ function renderGames(){
 function openGames(){gamesOverlay.classList.add('show')}
 function closeGames(){gamesOverlay.classList.remove('show')}
 
+var SOCIALS=[
+    {name:'TikTok',url:'https://tiktok.com'},
+    {name:'YouTube',url:'https://youtube.com'},
+    {name:'Instagram',url:'https://instagram.com'},
+    {name:'X / Twitter',url:'https://x.com'},
+    {name:'Reddit',url:'https://reddit.com'},
+    {name:'Discord',url:'https://discord.com'},
+    {name:'Twitch',url:'https://twitch.tv'},
+    {name:'Spotify',url:'https://open.spotify.com'},
+    {name:'Snapchat',url:'https://snapchat.com'},
+    {name:'Pinterest',url:'https://pinterest.com'},
+    {name:'Tumblr',url:'https://tumblr.com'},
+    {name:'WhatsApp',url:'https://web.whatsapp.com'},
+];
+
+function renderSocials(){
+    socialsGrid.innerHTML='';
+    for(var i=0;i<SOCIALS.length;i++){(function(s){
+        var tile=document.createElement('button');
+        tile.className='social-tile';
+        tile.innerHTML='<span class="game-name">'+s.name+'</span>';
+        tile.addEventListener('click',function(){urlInput.value=s.url;go(s.url);closeSocials()});
+        socialsGrid.appendChild(tile);
+    })(SOCIALS[i])}
+}
+
+function openSocials(){socialsOverlay.classList.add('show')}
+function closeSocials(){socialsOverlay.classList.remove('show')}
+
 goBtn.addEventListener('click',function(){go(urlInput.value)});
 urlInput.addEventListener('keydown',function(e){if(e.key==='Enter')go(urlInput.value)});
 $('#nav-back').addEventListener('click',function(){try{proxyFrame.contentWindow.history.back()}catch(_){}});
@@ -128,13 +158,17 @@ $('#add-tab').addEventListener('click',function(){var t=mkTab('');activeTabId=t.
 $('#games-toggle').addEventListener('click',openGames);
 $('#games-close').addEventListener('click',closeGames);
 gamesBackdrop.addEventListener('click',closeGames);
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(gamesOverlay.classList.contains('show'))closeGames();else if(fsOn){fsOn=false;document.body.classList.remove('fs')}}});
+$('#socials-toggle').addEventListener('click',openSocials);
+$('#socials-close').addEventListener('click',closeSocials);
+socialsBackdrop.addEventListener('click',closeSocials);
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(gamesOverlay.classList.contains('show'))closeGames();else if(socialsOverlay.classList.contains('show'))closeSocials();else if(fsOn){fsOn=false;document.body.classList.remove('fs')}}});
 fullscreenBtn.addEventListener('click',function(){fsOn=!fsOn;document.body.classList.toggle('fs',fsOn)});
 $('#cloak-btn').addEventListener('click',function(){maskOverlay.classList.remove('hidden')});
 
 function boot(){
     renderMaskSelector();
     renderGames();
+    renderSocials();
     var saved=loadCloak();
     if(saved){applyCloak(saved);maskOverlay.classList.add('hidden')}
     mkTab('');activeTabId=tabs[0].id;drawTabs();
