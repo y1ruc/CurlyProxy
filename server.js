@@ -2,17 +2,20 @@ const express = require('express');
 const http = require('http');
 const https = require('https');
 const path = require('path');
+const compression = require('compression');
 
 const PORT = process.env.PORT || 3000;
-const CACHE_TTL = 60000;
-const MAX_CACHE = 200;
+const CACHE_TTL_HTML = 120000;
+const CACHE_TTL_ASSET = 3600000;
+const MAX_CACHE = 500;
 const cache = new Map();
 
 const app = express();
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(compression());
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1d', setHeaders: function (res) { res.setHeader('Cache-Control', 'public, max-age=86400, immutable'); } }));
 
-const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 50 });
-const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 50 });
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 100, keepAliveMsecs: 30000 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 100, keepAliveMsecs: 30000 });
 
 const GAMES = {
     'slope':           { name: 'Slope',            url: 'https://slopegame.io' },
@@ -231,13 +234,16 @@ function proxyCore(target, req, res) {
     if (!/^https?:\/\//i.test(target)) return res.status(400).send('bad url');
 
     var cached = cache.get(target);
-    if (cached && Date.now() - cached.ts < CACHE_TTL && req.method === 'GET') {
+    if (cached && Date.now() - cached.ts < cached.ttl && req.method === 'GET') {
         for (var k in cached.headers) { res.setHeader(k, cached.headers[k]); }
         return res.send(cached.body);
     }
 
     (async function () {
         try {
+            var ac = new AbortController();
+            var timer = setTimeout(function () { ac.abort(); }, 30000);
+
             var fetchOpts = {
                 method: req.method,
                 headers: {
@@ -248,6 +254,7 @@ function proxyCore(target, req, res) {
                 },
                 redirect: 'follow',
                 agent: function (u) { return u.protocol === 'https:' ? httpsAgent : httpAgent; },
+                signal: ac.signal,
             };
             if (req.method !== 'GET' && req.method !== 'HEAD') {
                 var chunks = [];
@@ -261,6 +268,8 @@ function proxyCore(target, req, res) {
             }
 
             var fetchRes = await fetch(target, fetchOpts);
+            clearTimeout(timer);
+
             var ct = fetchRes.headers.get('content-type') || '';
             var finalUrl = fetchRes.url;
 
@@ -278,29 +287,29 @@ function proxyCore(target, req, res) {
             var isHtml = ct.indexOf('text/html') !== -1;
             var isCss = ct.indexOf('text/css') !== -1;
 
-            if (isHtml) {
+            if (isHtml || isCss) {
                 var body = await fetchRes.text();
-                body = body.replace(/<base\s+[^>]*>/gi, '');
-                body = rewriteHtmlPath(body, finalUrl);
+                if (isHtml) {
+                    body = body.replace(/<base\s+[^>]*>/gi, '');
+                    body = rewriteHtmlPath(body, finalUrl);
+                } else {
+                    body = rewriteCssPath(body, finalUrl);
+                }
                 for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
                 res.send(body);
-                if (body.length < 500000) {
+                if (body.length < 800000) {
                     if (cache.size >= MAX_CACHE) { cache.delete(cache.keys().next().value); }
-                    cache.set(target, { ts: Date.now(), headers: resHeaders, body: body });
+                    cache.set(target, { ts: Date.now(), ttl: CACHE_TTL_HTML, headers: resHeaders, body: body });
                 }
-            } else if (isCss) {
-                var css = await fetchRes.text();
-                css = rewriteCssPath(css, finalUrl);
-                for (var h2 in resHeaders) { res.setHeader(h2, resHeaders[h2]); }
-                res.setHeader('cache-control', 'public, max-age=300');
-                res.send(css);
             } else {
-                var buf = await fetchRes.arrayBuffer();
+                var buf = Buffer.from(await fetchRes.arrayBuffer());
                 for (var h3 in resHeaders) { res.setHeader(h3, resHeaders[h3]); }
-                if (buf.byteLength < 1000000) {
-                    res.setHeader('cache-control', 'public, max-age=300');
+                res.setHeader('cache-control', 'public, max-age=3600');
+                res.send(buf);
+                if (buf.byteLength < 2000000) {
+                    if (cache.size >= MAX_CACHE) { cache.delete(cache.keys().next().value); }
+                    cache.set(target, { ts: Date.now(), ttl: CACHE_TTL_ASSET, headers: resHeaders, body: buf });
                 }
-                res.send(Buffer.from(buf));
             }
         } catch (e) {
             res.status(502).send('proxy error');
@@ -325,23 +334,21 @@ app.all(/^\/proxy\/(https?)\/([^/]+)(\/.*)?$/, function (req, res) {
 
 function toPath(u) {
     if (!u) return '';
-    var abs;
-    try { abs = new URL(u).href; } catch (_) { return u; }
-    var p = new URL(abs);
+    var p;
+    try { p = new URL(u); } catch (_) { return u; }
+    if (p.protocol === 'data:' || p.protocol === 'javascript:' || p.protocol === 'blob:') return u;
     return '/proxy/' + p.protocol.replace(':', '') + '/' + p.host + p.pathname + (p.search || '');
 }
 
 function rewriteHtmlPath(html, baseUrl) {
-    var base = new URL(baseUrl);
     var parts = html.split(/(<script[\s>][\s\S]*?<\/script>)/gi);
     for (var i = 0; i < parts.length; i++) {
         if (/^<script/i.test(parts[i])) continue;
         parts[i] = parts[i].replace(/(\s)(src|href|action)\s*=\s*(["'])([^"'\s>]+?)(["'])/gi,
             function (m, sp, attr, q1, url, q2) {
-                if (/^(data:|#|javascript:|mailto:|blob:|about:)/i.test(url)) return m;
-                if (/^\/proxy\//i.test(url)) return m;
-                try { return sp + attr + '=' + q1 + toPath(new URL(url, base).href) + q2; }
-                catch (_) { return m; }
+                if (url.charCodeAt(0) === 35 || url.charCodeAt(0) === 47 && url.charCodeAt(1) === 112) return m;
+                if (/^(data:|javascript:|mailto:|blob:|about:)/i.test(url)) return m;
+                return sp + attr + '=' + q1 + toPath(new URL(url, baseUrl).href) + q2;
             }
         );
         parts[i] = parts[i].replace(/srcset\s*=\s*(["'])([^"']+?)(["'])/gi,
@@ -349,8 +356,8 @@ function rewriteHtmlPath(html, baseUrl) {
                 var chunks = val.split(/\s*,\s*/), out = [];
                 for (var j = 0; j < chunks.length; j++) {
                     var bits = chunks[j].trim().split(/\s+/), u = bits[0];
-                    if (/^(data:|https?:\/\/)/i.test(u) && !/^\/proxy\//i.test(u)) {
-                        try { bits[0] = toPath(new URL(u, base).href); } catch (_) {}
+                    if (/^(data:|https?:\/\/)/i.test(u) && u.indexOf('/proxy/') !== 0) {
+                        bits[0] = toPath(new URL(u, baseUrl).href);
                     }
                     out.push(bits.join(' '));
                 }
