@@ -112,9 +112,19 @@ function renderGames(){
         tile.className='game-tile';
         var slug=SLUGS[g.name]||g.name.toLowerCase().replace(/\s+/g,'');
         tile.innerHTML='<span class="game-icon"><img src="/gicons/'+slug+'.svg" alt=""></span><span class="game-name">'+g.name+'</span>';
-        tile.addEventListener('click',function(){urlInput.value=g.url;go(g.url);closeGames()});
+        tile.addEventListener('click',function(){openGame(slug)});
         gamesGrid.appendChild(tile);
     })(GAMES[i])}
+}
+
+function openGame(slug){
+    var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===activeTabId){t=tabs[i];break}}
+    if(!t||!t.url){t=mkTab('/game/'+slug)}else{t.url='/game/'+slug;t.title=slug}
+    activeTabId=t.id;
+    urlInput.value='';
+    proxyFrame.src='/game/'+slug;
+    welcome.style.display='none';proxyFrame.style.display='block';
+    drawTabs();closeGames();
 }
 
 function openGames(){gamesOverlay.classList.add('show')}

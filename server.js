@@ -14,6 +14,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 50 });
 const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 50 });
 
+const GAMES = {
+    'slope':           { name: 'Slope',            url: 'https://slopegame.io' },
+    '1v1lol':          { name: '1v1.LOL',          url: 'https://1v1lol.io' },
+    'shellshockers':   { name: 'Shell Shockers',   url: 'https://shellshock.io' },
+    'retrobowl':       { name: 'Retro Bowl',       url: 'https://playretrobowl.com' },
+    'drifthunters':    { name: 'Drift Hunters',    url: 'https://drift-hunters.io' },
+    'tunnelrush':      { name: 'Tunnel Rush',      url: 'https://tunnelrush.com' },
+    'cookieclicker':   { name: 'Cookie Clicker',   url: 'https://orteil.dashnet.org/cookieclicker' },
+    'paperio':         { name: 'Paper.io',         url: 'https://paper-io.com' },
+    'minecraft':       { name: 'Minecraft Classic',url: 'https://classic.minecraft.net' },
+    'geometrydash':    { name: 'Geometry Dash',    url: 'https://geometrydash.io' },
+    'krunker':         { name: 'Krunker.io',       url: 'https://krunker.io' },
+    'subwaysurfers':   { name: 'Subway Surfers',   url: 'https://subwaysurfersgame.io' },
+};
+
+app.get('/game/:slug', function (req, res) {
+    var slug = req.params.slug;
+    var game = GAMES[slug];
+    if (!game) return res.status(404).send('Game not found');
+
+    var proxyUrl = '/proxy?url=' + encodeURIComponent(game.url);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + game.name + '</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;position:fixed;inset:0}</style></head><body><iframe src="' + proxyUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-pointer-lock allow-top-navigation allow-presentation allow-orientation-lock allow-downloads"></iframe></body></html>');
+});
+
 app.all('/proxy', async function (req, res) {
     var target = req.query.url;
     if (!target) return res.status(400).send('missing url');
