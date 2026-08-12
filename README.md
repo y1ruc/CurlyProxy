@@ -1,6 +1,6 @@
 # CurlyProxy
 
-A sleek, fast web proxy with a glassmorphism sidebar UI and built-in Discord recon logging.
+A fast web proxy with a browser-style UI, a 117-game library, and tab cloaking to look like Google Classroom.
 
 ## Setup
 
@@ -13,29 +13,30 @@ npm start
 
 Open `http://localhost:3000`.
 
-## Deploy
+## How it works
 
-**SITE COMING SOON**
+A Node.js Express server that fetches remote URLs server-side and rewrites the HTML so all requests route back through the proxy. Two proxy modes:
 
-```bash
-npm start
-```
+- **Query-param** — `/proxy?url=https://example.com` (used by the URL bar)
+- **Path-based** — `/proxy/https/example.com/path` (used by game embeds, preserves relative URL resolution)
 
 ## Features
 
-- **Sidebar UI** — glass backdrop with vertical tabs, always-visible URL bar
-- **12-game library** — overlay grid, one-click proxy to popular titles
+- **Browser UI** — toolbar with back/forward/refresh, pill URL bar, tabs
+- **Game library** — 117 games at `/games` with cover art and search
+- **Game embeds** — `/game/<slug>` fullscreen pages (onlinegames.io + Y8 embed endpoints)
+- **Tab cloaking** — pick a disguise (Google Classroom, Docs, Khan Academy, etc.) that changes the page title + favicon
 - **Fullscreen mode** — hides chrome, Escape to exit
-- **Recon logging** — every connection and proxy request fires a Discord embed (IP, UA, timestamp)
-- **30s TTL cache** — repeat hits served from memory
-- **Keep-alive agent pool** — no cold-start connections
+- **Loading spinners** — custom loaders on game pages and the main browser
+- **gzip compression**, **1hr asset cache**, **keep-alive connection pool**
 
 ## Files
 
 | Path | Purpose |
 |------|---------|
-| `server.js` | Express proxy, webhook logger, fetch+rewrite engine |
-| `setup.js` | Postinstall — copies UV engine files |
-| `public/index.html` | Sidebar layout |
-| `public/css/style.css` | Glassmorphism theme |
-| `public/js/script.js` | Tab management, game overlay, fullscreen |
+| `server.js` | Express proxy engine, game library, `/games` + `/game/:slug` pages |
+| `public/index.html` | Browser UI |
+| `public/css/style.css` | Theme |
+| `public/js/script.js` | Tabs, games fetch, cloaking, fullscreen |
+| `public/gicons/` | Game icon SVGs (original 12 games) |
+| `debug.js` | CLI: `node debug.js <url> [--proxy]` to inspect proxied pages |
