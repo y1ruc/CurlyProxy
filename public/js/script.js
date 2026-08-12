@@ -33,6 +33,10 @@ var fullscreenBtn=$('#fullscreen-btn');
 
 var tabs=[],activeTabId=null,fsOn=false;
 
+var loader=document.getElementById('loader');
+proxyFrame.addEventListener('load',function(){loader.style.display='none'});
+function showLoader(){loader.style.display='flex'}
+
 function applyCloak(m){
     document.getElementById('page-title').textContent=m.title;
     document.getElementById('page-favicon').href=m.icon;
@@ -67,7 +71,7 @@ function dropTab(id){
     drawTabs();
 }
 function switchTab(id){var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===id){t=tabs[i];break}}if(!t)return;activeTabId=id;urlInput.value=t.url||'';loadTab(t);drawTabs()}
-function loadTab(t){if(t.url){proxyFrame.src='/proxy?url='+encodeURIComponent(fix(t.url));welcome.style.display='none';proxyFrame.style.display='block'}else{proxyFrame.src='about:blank';welcome.style.display='flex';proxyFrame.style.display='none'}}
+function loadTab(t){if(t.url){showLoader();proxyFrame.src='/proxy?url='+encodeURIComponent(fix(t.url));welcome.style.display='none';proxyFrame.style.display='block'}else{proxyFrame.src='about:blank';welcome.style.display='flex';proxyFrame.style.display='none'}}
 function showHome(){welcome.style.display='flex';proxyFrame.style.display='none';urlInput.value='';activeTabId=null;drawTabs()}
 function drawTabs(){
     tabListEl.innerHTML='';
@@ -87,6 +91,7 @@ function go(raw){
     var i,t=null;for(i=0;i<tabs.length;i++){if(tabs[i].id===activeTabId){t=tabs[i];break}}
     if(!t||!t.url){t=mkTab(u)}else{t.url=u;t.title=host(u)}
     activeTabId=t.id;urlInput.value=u;
+    showLoader();
     proxyFrame.src='/proxy?url='+encodeURIComponent(u);
     welcome.style.display='none';proxyFrame.style.display='block';
     drawTabs();
@@ -118,6 +123,7 @@ function openGame(slug){
     if(!t||!t.url){t=mkTab('/game/'+slug)}else{t.url='/game/'+slug;t.title=slug}
     activeTabId=t.id;
     urlInput.value='';
+    showLoader();
     proxyFrame.src='/game/'+slug;
     welcome.style.display='none';proxyFrame.style.display='block';
     drawTabs();closeGames();
