@@ -72,7 +72,7 @@ app.all('/proxy', async function (req, res) {
             var body = await fetchRes.text();
             body = body.replace(/<base\s+[^>]*>/gi, '');
             body = rewriteHtml(body, finalUrl);
-            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '">');
+            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '"><script>new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(function(n){if(n.tagName==="SCRIPT"){var v=n.getAttribute("src");if(v&&v.indexOf(location.origin)===-1&&!/^(data|blob):/.test(v)){try{n.src="/proxy?url="+encodeURIComponent(new URL(v,location.href).href)}catch(e){}}}if(n.tagName==="LINK"&&n.rel==="stylesheet"){var h=n.getAttribute("href");if(h&&h.indexOf(location.origin)===-1&&!/^(data|blob):/.test(h)){try{n.href="/proxy?url="+encodeURIComponent(new URL(h,location.href).href)}catch(e){}}}if(n.tagName==="IMG"){var s=n.getAttribute("src");if(s&&s.indexOf(location.origin)===-1&&!/^(data|blob):/.test(s)){try{n.src="/proxy?url="+encodeURIComponent(new URL(s,location.href).href)}catch(e){}}}})});}).observe(document.documentElement,{childList:true,subtree:true});</script>');
             for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
             res.send(body);
             if (body.length < 500000) {
