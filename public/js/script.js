@@ -161,7 +161,7 @@ $('#nav-back').addEventListener('click',function(){try{proxyFrame.contentWindow.
 $('#nav-fwd').addEventListener('click',function(){try{proxyFrame.contentWindow.history.forward()}catch(_){}});
 $('#nav-refresh').addEventListener('click',function(){if(proxyFrame.src&&proxyFrame.src!=='about:blank'){proxyFrame.src=proxyFrame.src}});
 $('#add-tab').addEventListener('click',function(){var t=mkTab('');activeTabId=t.id;showHome();drawTabs()});
-$('#games-toggle').addEventListener('click',openGames);
+$('#games-toggle').addEventListener('click',function(){window.location.href='/games'});
 $('#games-close').addEventListener('click',closeGames);
 gamesBackdrop.addEventListener('click',closeGames);
 $('#socials-toggle').addEventListener('click',openSocials);

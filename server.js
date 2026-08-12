@@ -134,11 +134,88 @@ const GAMES = {
     'spiky-circle':    { name: 'Spiky Circle',     url: 'https://www.y8.com/embed/spiky_circle' },
 };
 
+const GAME_IMAGES = {
+    'steal-brainrots': 'https://www.onlinegames.io/media/posts/1340/responsive/steal-brainrots-multiplayer-2-xs.webp',
+    'gta-simulator': 'https://www.onlinegames.io/media/posts/416/responsive/GTA-Simulator-xs.jpg',
+    'stack-fire-ball': 'https://www.onlinegames.io/media/posts/184/responsive/Stack-Fire-Ball-Game-xs.jpg',
+    'stickman-gta': 'https://www.onlinegames.io/media/posts/900/responsive/stickman-gta-city-free-xs.jpg',
+    'flight-sim': 'https://www.onlinegames.io/media/posts/342/responsive/Real-Flight-Simulator-2-xs.jpg',
+    'drift-king': 'https://www.onlinegames.io/media/posts/729/responsive/Drift-King-xs.jpg',
+    'masked-sf': 'https://www.onlinegames.io/media/posts/310/responsive/Masked-Special-Forces-FPS-xs.jpg',
+    'cs-online': 'https://www.onlinegames.io/media/posts/434/responsive/CS-Online-xs.jpg',
+    'dublix': 'https://www.onlinegames.io/media/posts/1126/responsive/dublix-xs.webp',
+    'stickman-parkour': 'https://www.onlinegames.io/media/posts/871/responsive/stickman-parkour-OG-xs.jpg',
+    'snaker-io': 'https://www.onlinegames.io/media/posts/1261/responsive/snaker-io-xs.webp',
+    'cube-worlds': 'https://www.onlinegames.io/media/posts/986/responsive/Cube-Worlds-xs.jpg',
+    'cubecraft': 'https://www.onlinegames.io/media/posts/1113/responsive/cubecraft-survival-xs.webp',
+    'get-on-top': 'https://www.onlinegames.io/media/posts/697/responsive/Get-on-Top-xs.jpg',
+    'drift-hunters-pro': 'https://www.onlinegames.io/media/posts/397/responsive/Drift-Hunters-Pro-xs.jpg',
+    'super-car': 'https://www.onlinegames.io/media/posts/854/responsive/supercardriving-2-xs.jpg',
+    'edys-car': 'https://www.onlinegames.io/media/posts/238/responsive/Edys-Car-Simulator-Online-xs.jpg',
+    'warstrike': 'https://www.onlinegames.io/media/posts/870/responsive/WarStrike-Online-xs.jpg',
+    'madalin-stunt': 'https://www.onlinegames.io/media/posts/401/responsive/Madalin-Stunt-Cars-Pro-Game-xs.jpg',
+    'armedforces': 'https://www.onlinegames.io/media/posts/234/responsive/Armed-Forces-io-xs.jpg',
+    '99-nights': 'https://www.onlinegames.io/media/posts/1190/responsive/99-nights-in-the-forest-xs.webp',
+    'escape-car': 'https://www.onlinegames.io/media/posts/1000/responsive/Escape-Car-xs.jpg',
+    'strike-force': 'https://www.onlinegames.io/media/posts/366/responsive/Crazy-Strike-Force-xs.jpg',
+    'cat-sim': 'https://www.onlinegames.io/media/posts/330/responsive/Cat-Simulator-Online-xs.jpg',
+    'fast-food-rush': 'https://www.onlinegames.io/media/posts/979/responsive/fast-food-rush-xs.jpg',
+    'golf-bit': 'https://www.onlinegames.io/media/posts/1289/responsive/golf-bit-xs.webp',
+    'pixelmon-town': 'https://www.onlinegames.io/media/posts/1214/responsive/pixelmon-town-xs.webp',
+    'legendary-sniper': 'https://www.onlinegames.io/media/posts/596/responsive/Legendary-Sniper-xs.jpg',
+    'tank-arena': 'https://www.onlinegames.io/media/posts/956/responsive/Tank-Arena-Online-xs.jpg',
+    '2048': 'https://www.onlinegames.io/media/posts/916/responsive/2048-xs.jpg',
+    'burnout-city': 'https://www.onlinegames.io/media/posts/861/responsive/burnoutcity-xs.jpg',
+    'block-blast': 'https://www.onlinegames.io/media/posts/876/responsive/block-blast-xs.jpg',
+    'stickman-destruct': 'https://www.onlinegames.io/media/posts/233/responsive/Stickman-Destruction-xs.jpg',
+    'highway-racer': 'https://www.onlinegames.io/media/posts/822/responsive/Highway-Racer-Pro-xs.jpg',
+    'fast-food-mgr': 'https://www.onlinegames.io/media/posts/1114/responsive/fast-food-manager-xs.webp',
+    'mini-cars': 'https://www.onlinegames.io/media/posts/1010/responsive/Mini-Cars-Racing-xs.jpg',
+    'police-chase': 'https://www.onlinegames.io/media/posts/155/responsive/Police-Chase-Drifter-Online-xs.jpg',
+    '8-ball-pool': 'https://www.onlinegames.io/media/posts/442/responsive/8-Ball-Pool-Billiard-xs.jpg',
+    'fps-strike': 'https://www.onlinegames.io/media/posts/902/responsive/fps-strike-online-xs.jpg',
+    'basket-hoop': 'https://www.onlinegames.io/media/posts/843/responsive/Basket-Hoop-xs.jpg',
+    'army-combat': 'https://www.onlinegames.io/media/posts/664/responsive/Army-Combat-xs.jpg',
+    'velocity-rush': 'https://www.onlinegames.io/media/posts/1265/responsive/velocity-rush-xs.webp',
+    'troll-level': 'https://www.onlinegames.io/media/posts/857/responsive/troll-level-online-xs.jpg',
+    'taxi-sim': 'https://www.onlinegames.io/media/posts/465/responsive/Taxi-Simulator-xs.jpg',
+    'fire-and-water': 'https://www.onlinegames.io/media/posts/469/responsive/Fire-and-Water-xs.jpg',
+    'geometry-vector': 'https://www.onlinegames.io/media/posts/1246/responsive/geometry-vector-xs.webp',
+    'poop-clicker': 'https://www.onlinegames.io/media/posts/742/responsive/Poop-Clicker-xs.jpg',
+    'survival-island': 'https://www.onlinegames.io/media/posts/970/responsive/Survival-Island-xs.jpg',
+    'drift-rider': 'https://www.onlinegames.io/media/posts/553/responsive/Drift-Rider-xs.jpg',
+    'backflip': 'https://www.onlinegames.io/media/posts/1203/responsive/backflip-challenge-xs.webp',
+    'crazy-drifter': 'https://www.onlinegames.io/media/posts/314/responsive/Crazy-Drifter-xs.jpg',
+    'kick-dummy': 'https://www.onlinegames.io/media/posts/414/responsive/Kick-The-Dummy-Game-xs.jpg',
+    'car-football': 'https://www.onlinegames.io/media/posts/405/responsive/Car-Football-xs.jpg',
+    'airplane-racer': 'https://www.onlinegames.io/media/posts/268/responsive/Airplane-Racer-xs.jpg',
+    'solitaire': 'https://www.onlinegames.io/media/posts/1007/responsive/solitaire-xs.jpg',
+    'urban-sniper': 'https://www.onlinegames.io/media/posts/322/responsive/Urban-Sniper-Game-xs.jpg',
+    'cattle-3d': 'https://www.onlinegames.io/media/posts/1004/responsive/Crazy-Cattle-3D-xs.jpg',
+    'bandits-pvp': 'https://www.onlinegames.io/media/posts/487/responsive/Bandits-Multiplayer-PvP-xs.jpg',
+    'zombie-survival': 'https://www.onlinegames.io/media/posts/225/responsive/Masked-Forces-Zombie-Survival-Online-xs.jpg',
+    'moto-traffic': 'https://www.onlinegames.io/media/posts/419/responsive/Motorbike-Traffic-Game-xs.jpg',
+    'super-mini': 'https://www.onlinegames.io/media/posts/819/responsive/Super-Mini-Racing-xs.jpg',
+    'poly-racing': 'https://www.onlinegames.io/media/posts/835/responsive/Poly-racing-cars-image-xs.jpg',
+    'rome-sim': 'https://www.onlinegames.io/media/posts/634/responsive/Rome-Simulator-2-xs.jpg',
+    'crazy-car-arena': 'https://www.onlinegames.io/media/posts/317/responsive/Crazy-Car-Arena-Game-xs.jpg',
+    'hero-rush-td': 'https://www.onlinegames.io/media/posts/491/responsive/Hero-Rush-Tower-Defense-Play-xs.jpg',
+    'police-traffic': 'https://www.onlinegames.io/media/posts/187/responsive/Pollice-Traffic-xs.jpg',
+};
+
 app.get('/api/games', function (req, res) {
     var list = [];
-    for (var k in GAMES) { list.push({ slug: k, name: GAMES[k].name }); }
+    for (var k in GAMES) { list.push({ slug: k, name: GAMES[k].name, img: GAME_IMAGES[k] || '' }); }
     res.json(list);
 });
+
+app.get('/games', function (req, res) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CurlyProxy - Games</title><style>' + GAMES_CSS + '</style></head><body><div class="top"><button class="back" onclick="location.href=\'/\'"><svg viewBox="0 0 24 24" width="18" height="18"><polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Back</button><h1>Games</h1><input id="search" placeholder="Search games..." autocomplete="off"></div><div class="grid" id="grid"></div><script>var G=' + JSON.stringify(Object.keys(GAMES).map(function(k){return {slug:k,name:GAMES[k].name,img:GAME_IMAGES[k]||''}})) + ';var g=document.getElementById("grid"),s=document.getElementById("search");function draw(){var q=(s.value||"").toLowerCase();g.innerHTML="";G.forEach(function(x){if(q&&x.name.toLowerCase().indexOf(q)===-1)return;var c=document.createElement("a");c.className="card";c.href="/game/"+x.slug;c.innerHTML=(x.img?\'<img src="\'+x.img+\'" loading="lazy" onerror="this.parentNode.style.background=\'linear-gradient(135deg,#8b5cf6,#06b6d4)\'">\':\'<div class="ph">\'+x.name.charAt(0).toUpperCase()+\'</div>\')+\'<div class="name">\'+x.name+\'</div>\';g.appendChild(c)})}s.addEventListener("input",draw);draw();</script></body></html>');
+});
+
+const GAMES_CSS = '*{margin:0;padding:0;box-sizing:border-box}body{background:#0b0b12;color:#e4e4e7;font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh}.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(11,11,18,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}.top h1{font-size:18px;font-weight:600}.back{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#e4e4e7;cursor:pointer;font-size:13px;font-family:inherit}.back:hover{background:rgba(255,255,255,.08)}#search{flex:1;max-width:300px;margin-left:auto;padding:9px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#e4e4e7;font-size:13px;outline:none}#search:focus{border-color:rgba(139,92,246,.4)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:20px}.card{position:relative;display:flex;flex-direction:column;gap:8px;text-decoration:none;color:#e4e4e7;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:transform .15s,border-color .15s}.card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.4)}.card img{width:100%;aspect-ratio:16/10;object-fit:cover;background:linear-gradient(135deg,#1a1a2e,#16213e)}.card .ph{width:100%;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:#fff;background:linear-gradient(135deg,#8b5cf6,#06b6d4)}.card .name{padding:0 10px 12px;font-size:13px;font-weight:500;text-align:center}@media(max-width:600px){.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;padding:12px}}';
+
 
 app.get('/game/:slug', function (req, res) {
     var slug = req.params.slug;
@@ -147,7 +224,7 @@ app.get('/game/:slug', function (req, res) {
 
     var proxyUrl = '/proxy?url=' + encodeURIComponent(game.url);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + game.name + '</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;position:fixed;inset:0}</style></head><body><iframe src="' + proxyUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-pointer-lock allow-top-navigation allow-presentation allow-orientation-lock allow-downloads"></iframe></body></html>');
+    res.send('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + game.name + '</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:none;position:fixed;inset:0}.bar{position:fixed;top:12px;left:12px;z-index:10;display:flex;align-items:center;gap:10px}.bar button{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;cursor:pointer;font-size:13px;font-family:inherit;backdrop-filter:blur(8px)}.bar button:hover{background:rgba(0,0,0,.8)}.bar span{padding:8px 14px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-size:13px;backdrop-filter:blur(8px)}</style></head><body><div class="bar"><button onclick="history.back()"><svg viewBox="0 0 24 24" width="16" height="16"><polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Back</button><span>' + game.name + '</span></div><iframe src="' + proxyUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-pointer-lock allow-top-navigation allow-presentation allow-orientation-lock allow-downloads"></iframe></body></html>');
 });
 
 app.all('/proxy', async function (req, res) {
