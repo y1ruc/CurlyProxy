@@ -41,7 +41,7 @@ app.get('/proxy', async function (req, res) {
         var finalUrl = fetchRes.url;
 
         var resHeaders = {};
-        var skip = ['content-encoding', 'content-length', 'transfer-encoding'];
+        var skip = ['content-encoding', 'content-length', 'transfer-encoding', 'x-frame-options', 'content-security-policy', 'x-content-type-options'];
         fetchRes.headers.forEach(function (v, k) {
             if (skip.indexOf(k.toLowerCase()) === -1) { resHeaders[k] = v; }
         });
