@@ -172,7 +172,6 @@ function boot(){
     var saved=loadCloak();
     if(saved){applyCloak(saved);maskOverlay.classList.add('hidden')}
     mkTab('');activeTabId=tabs[0].id;drawTabs();
-    if(navigator.serviceWorker){navigator.serviceWorker.register('/sw.js')}
 }
 
 boot();

@@ -14,19 +14,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 50 });
 const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 50 });
 
-app.get('/proxy', async function (req, res) {
+app.all('/proxy', async function (req, res) {
     var target = req.query.url;
     if (!target) return res.status(400).send('missing url');
     if (!/^https?:\/\//i.test(target)) return res.status(400).send('bad url');
 
     var cached = cache.get(target);
-    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    if (cached && Date.now() - cached.ts < CACHE_TTL && req.method === 'GET') {
         for (var k in cached.headers) { res.setHeader(k, cached.headers[k]); }
         return res.send(cached.body);
     }
 
     try {
-        var fetchRes = await fetch(target, {
+        var fetchOpts = {
+            method: req.method,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -35,7 +36,19 @@ app.get('/proxy', async function (req, res) {
             },
             redirect: 'follow',
             agent: function (u) { return u.protocol === 'https:' ? httpsAgent : httpAgent; },
-        });
+        };
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+            var chunks = [];
+            req.on('data', function (c) { chunks.push(c); });
+            await new Promise(function (resolve) { req.on('end', resolve); });
+            if (chunks.length > 0) {
+                fetchOpts.body = Buffer.concat(chunks);
+                var ct2 = req.headers['content-type'];
+                if (ct2) fetchOpts.headers['Content-Type'] = ct2;
+            }
+        }
+
+        var fetchRes = await fetch(target, fetchOpts);
 
         var ct = fetchRes.headers.get('content-type') || '';
         var finalUrl = fetchRes.url;
@@ -59,7 +72,7 @@ app.get('/proxy', async function (req, res) {
             var body = await fetchRes.text();
             body = body.replace(/<base\s+[^>]*>/gi, '');
             body = rewriteHtml(body, finalUrl);
-            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '"><script>!function(){var P="/proxy?url=",B=/\\b(?:404|403|blocked|captcha)\\b/;var b=function(u){return B.test(String(u||""))};try{var _as=Location.prototype.assign,_rp=Location.prototype.replace;Object.defineProperty(Location.prototype,"assign",{value:function(u){if(!b(u))return _as.call(this,u)}});Object.defineProperty(Location.prototype,"replace",{value:function(u){if(!b(u))return _rp.call(this,u)}})}catch(e){};try{var _ps=history.pushState,_rs=history.replaceState;history.pushState=function(s,t,u){if(!b(u))return _ps.apply(this,arguments)};history.replaceState=function(s,t,u){if(!b(u))return _rs.apply(this,arguments)}}catch(e){};var _open=window.open;window.open=function(u,n,f){if(b(u))return null;return _open.apply(this,arguments)};var base=document.querySelector("base").href;try{var _f=window.fetch;window.fetch=function(u,o){var t=String(u);if(t.indexOf(location.origin)===0||t.indexOf("blob:")===0||t.indexOf("data:")===0)return _f.apply(this,arguments);try{var n=new URL(t,base);return _f(P+encodeURIComponent(n.href),o)}catch(e){return _f.apply(this,arguments)}}}catch(e){};try{var _xhropen=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){var t=String(u);if(t.indexOf(location.origin)!==0&&t.indexOf("blob:")!==0&&t.indexOf("data:")!==0){try{var n=new URL(t,base);u=P+encodeURIComponent(n.href)}catch(e){}}return _xhropen.call(this,m,u)}}catch(e){};try{var d=document.createElement.bind(document);document.createElement=function(t){var e=d(t);if(t.toLowerCase()==="script"){var _ss=Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype,"src")||Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype,"src",true);if(_ss&&_ss.set){var os=_ss.set;Object.defineProperty(e,"src",{get:_ss.get,set:function(v){var t=String(v);if(t.indexOf(location.origin)!==0&&t.indexOf("blob:")!==0&&t.indexOf("data:")!==0){try{var n=new URL(t,base);v=P+encodeURIComponent(n.href)}catch(e){}}return os.call(this,v)}})}if(t.toLowerCase()==="link"){var _hs=Object.getOwnPropertyDescriptor(HTMLLinkElement.prototype,"href")||Object.getOwnPropertyDescriptor(HTMLLinkElement.prototype,"href",true);if(_hs&&_hs.set){var oh=_hs.set;Object.defineProperty(e,"href",{get:_hs.get,set:function(v){var t=String(v);if(t.indexOf(location.origin)!==0&&t.indexOf("blob:")!==0&&t.indexOf("data:")!==0){try{var n=new URL(t,base);v=P+encodeURIComponent(n.href)}catch(e){}}return oh.call(this,v)}})}}if(t.toLowerCase()==="img"){var _is=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src")||Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src",true);if(_is&&_is.set){var oi=_is.set;Object.defineProperty(e,"src",{get:_is.get,set:function(v){var t=String(v);if(t.indexOf(location.origin)!==0&&t.indexOf("blob:")!==0&&t.indexOf("data:")!==0){try{var n=new URL(t,base);v=P+encodeURIComponent(n.href)}catch(e){}}return oi.call(this,v)}})}}return e}}catch(e){};var _di=Image;window.Image=function(w,h){var i=new _di(w,h);var _is2=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src")||Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src",true);if(_is2&&_is2.set){var oi2=_is2.set;Object.defineProperty(i,"src",{get:_is2.get,set:function(v){var t=String(v);if(t.indexOf(location.origin)!==0&&t.indexOf("blob:")!==0&&t.indexOf("data:")!==0){try{var n=new URL(t,base);v=P+encodeURIComponent(n.href)}catch(e){}}return oi2.call(this,v)}})}return i};setInterval(function(){try{if(b(location.href)){location.href=location.href.replace(/\\b(?:404|403|blocked|captcha)\\b.*/,"")}}catch(e){}},50)}();</script>');
+            body = body.replace(/<head[^>]*>/i, '<head><base href="/proxy?url=' + enc(finalUrl) + '">');
             for (var h in resHeaders) { res.setHeader(h, resHeaders[h]); }
             res.send(body);
             if (body.length < 500000) {
